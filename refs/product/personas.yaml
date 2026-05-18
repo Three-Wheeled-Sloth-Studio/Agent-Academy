@@ -1,0 +1,6 @@
+version: 1
+updated: YYYY-MM-DD
+personas:
+  - id: TODO-persona
+    summary: TODO
+    needs: []

@@ -1,0 +1,25 @@
+version: 1
+updated: YYYY-MM-DD
+identity:
+  name: TODO
+  repository_url: TODO
+  summary: TODO
+  current_phase: TODO
+thesis:
+  core_promise: TODO
+audience:
+  primary_users: []
+stack:
+  summary: TODO
+repository_layout:
+  source_roots: []
+  docs_roots: []
+source_of_truth:
+  planning: refs/planning
+  architecture: refs/architecture
+  product: refs/product
+  implementation: refs/implementation
+  handoffs: refs/handoffs
+  testing: refs/testing
+  ui: refs/UI
+known_open_questions: []

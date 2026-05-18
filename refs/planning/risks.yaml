@@ -1,0 +1,8 @@
+version: 1
+updated: YYYY-MM-DD
+risks:
+  - id: TODO-risk
+    status: open
+    severity: medium
+    summary: TODO
+    mitigation: TODO

@@ -1,0 +1,7 @@
+version: 1
+updated: YYYY-MM-DD
+areas:
+  TODO-area:
+    guidance: []
+    source_roots: []
+    notes: TODO

@@ -1,0 +1,7 @@
+version: 1
+updated: YYYY-MM-DD
+roadmap:
+  - id: TODO-roadmap-item
+    horizon: now
+    status: planned
+    summary: TODO

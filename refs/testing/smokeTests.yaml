@@ -1,0 +1,7 @@
+version: 1
+updated: YYYY-MM-DD
+smoke_tests:
+  - id: TODO-smoke-test
+    status: draft
+    summary: TODO
+    steps: []

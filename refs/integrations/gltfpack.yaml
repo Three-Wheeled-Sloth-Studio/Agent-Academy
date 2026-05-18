@@ -1,0 +1,7 @@
+version: 1
+updated: YYYY-MM-DD
+integration:
+  id: gltfpack
+  status: not-evaluated
+  mode: TODO
+  config_fields: []

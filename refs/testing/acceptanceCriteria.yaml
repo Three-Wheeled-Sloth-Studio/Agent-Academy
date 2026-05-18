@@ -1,0 +1,6 @@
+version: 1
+updated: YYYY-MM-DD
+criteria:
+  - id: TODO-criterion
+    status: draft
+    summary: TODO

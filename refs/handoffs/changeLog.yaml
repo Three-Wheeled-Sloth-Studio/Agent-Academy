@@ -1,0 +1,6 @@
+version: 1
+updated: YYYY-MM-DD
+changes:
+  - date: YYYY-MM-DD
+    summary: TODO
+    refs: []

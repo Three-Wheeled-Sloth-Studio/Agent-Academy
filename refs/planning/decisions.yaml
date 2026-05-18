@@ -1,0 +1,9 @@
+version: 1
+updated: YYYY-MM-DD
+decisions:
+  - id: TODO-decision
+    status: proposed
+    date: YYYY-MM-DD
+    decision: TODO
+    rationale: TODO
+    consequences: []

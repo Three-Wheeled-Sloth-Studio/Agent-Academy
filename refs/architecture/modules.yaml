@@ -1,0 +1,9 @@
+version: 1
+updated: YYYY-MM-DD
+modules:
+  - id: TODO-module
+    name: TODO
+    status: planned
+    owner_area: TODO
+    responsibility: TODO
+    dependencies: []

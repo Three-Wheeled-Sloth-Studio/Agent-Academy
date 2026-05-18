@@ -1,0 +1,6 @@
+version: 1
+updated: YYYY-MM-DD
+assumptions:
+  - id: TODO-assumption
+    status: unverified
+    summary: TODO

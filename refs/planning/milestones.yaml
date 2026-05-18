@@ -1,0 +1,8 @@
+version: 1
+updated: YYYY-MM-DD
+milestones:
+  - id: TODO-milestone
+    status: planned
+    target: TODO
+    summary: TODO
+    exit_criteria: []

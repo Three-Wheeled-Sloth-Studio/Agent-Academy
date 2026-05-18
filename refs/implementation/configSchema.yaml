@@ -1,0 +1,7 @@
+version: 1
+updated: YYYY-MM-DD
+schemas:
+  TODO-config:
+    status: draft
+    purpose: TODO
+    fields: []

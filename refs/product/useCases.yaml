@@ -1,0 +1,7 @@
+version: 1
+updated: YYYY-MM-DD
+use_cases:
+  - id: TODO-use-case
+    summary: TODO
+    actors: []
+    outcome: TODO

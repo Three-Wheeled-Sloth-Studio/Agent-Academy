@@ -1,0 +1,6 @@
+version: 1
+updated: YYYY-MM-DD
+machine_profiles:
+  - id: TODO-machine-profile
+    status: draft
+    tools: []

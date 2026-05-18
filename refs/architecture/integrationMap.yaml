@@ -1,0 +1,8 @@
+version: 1
+updated: YYYY-MM-DD
+integrations:
+  - id: TODO-integration
+    mode: TODO
+    required_for: []
+    config_source: TODO
+    status: planned

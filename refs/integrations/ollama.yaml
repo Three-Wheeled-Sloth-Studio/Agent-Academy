@@ -1,0 +1,7 @@
+version: 1
+updated: YYYY-MM-DD
+integration:
+  id: ollama
+  status: not-evaluated
+  mode: TODO
+  config_fields: []
