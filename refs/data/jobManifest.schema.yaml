@@ -1,6 +1,7 @@
 version: 1
-updated: YYYY-MM-DD
-schema:
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
+definition:
   status: draft
   required_fields: []
   fields: []

@@ -1,6 +1,7 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 machine_profiles:
-  - id: TODO-machine-profile
+  - id: TEMPLATE_TODO-machine-profile
     status: draft
     tools: []

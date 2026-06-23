@@ -1,6 +1,7 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 criteria:
-  - id: TODO-criterion
+  - id: TEMPLATE_TODO-criterion
     status: draft
-    summary: TODO
+    summary: TEMPLATE_TODO

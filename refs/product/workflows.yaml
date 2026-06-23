@@ -1,5 +1,6 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 workflows:
-  - id: TODO-workflow
+  - id: TEMPLATE_TODO-workflow
     steps: []

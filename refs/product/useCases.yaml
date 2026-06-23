@@ -1,7 +1,8 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 use_cases:
-  - id: TODO-use-case
-    summary: TODO
+  - id: TEMPLATE_TODO-use-case
+    summary: TEMPLATE_TODO
     actors: []
-    outcome: TODO
+    outcome: TEMPLATE_TODO

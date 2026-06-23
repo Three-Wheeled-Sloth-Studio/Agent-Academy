@@ -1,4 +1,5 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 principles:
-  - TODO: Add project UI principles.
+  - TEMPLATE_TODO: Add project UI principles.

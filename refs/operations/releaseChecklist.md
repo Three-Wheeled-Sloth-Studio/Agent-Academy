@@ -1,3 +1,3 @@
 # Release Checklist
 
-- TODO: Add release validation steps.
+- TEMPLATE_TODO: Add release validation steps.

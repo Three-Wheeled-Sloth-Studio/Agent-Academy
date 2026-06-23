@@ -1,8 +1,9 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 milestones:
-  - id: TODO-milestone
+  - id: TEMPLATE_TODO-milestone
     status: planned
-    target: TODO
-    summary: TODO
+    target: TEMPLATE_TODO
+    summary: TEMPLATE_TODO
     exit_criteria: []

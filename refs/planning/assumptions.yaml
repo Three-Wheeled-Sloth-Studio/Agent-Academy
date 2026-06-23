@@ -1,6 +1,7 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 assumptions:
-  - id: TODO-assumption
+  - id: TEMPLATE_TODO-assumption
     status: unverified
-    summary: TODO
+    summary: TEMPLATE_TODO

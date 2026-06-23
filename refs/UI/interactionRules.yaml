@@ -1,5 +1,6 @@
 version: 1
-updated: YYYY-MM-DD
-rules:
-  - id: TODO-rule
-    summary: TODO
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
+interaction_rules:
+  - id: TEMPLATE_TODO-rule
+    summary: TEMPLATE_TODO

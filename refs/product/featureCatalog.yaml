@@ -1,6 +1,7 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 features:
-  - id: TODO-feature
+  - id: TEMPLATE_TODO-feature
     status: planned
-    summary: TODO
+    summary: TEMPLATE_TODO

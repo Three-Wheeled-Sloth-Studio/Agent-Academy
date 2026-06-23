@@ -1,8 +1,9 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 risks:
-  - id: TODO-risk
+  - id: TEMPLATE_TODO-risk
     status: open
     severity: medium
-    summary: TODO
-    mitigation: TODO
+    summary: TEMPLATE_TODO
+    mitigation: TEMPLATE_TODO

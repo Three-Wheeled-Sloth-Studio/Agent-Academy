@@ -1,4 +1,5 @@
 version: 1
+schema: refs/schemas/schemaRegistry.yaml
 instructions:
   - Read refs/project.yaml before starting project work.
   - Read refs/planning/roadmap.yaml and refs/planning/todos.yaml before adding or changing implementation work.
@@ -7,3 +8,8 @@ instructions:
   - Read refs/testing/validationCommands.yaml before finalizing changes.
   - Keep durable decisions, todos, handoffs, and validation notes in refs.
   - Do not store secrets in refs.
+  - If a project fact is unknown, record it in refs/planning/openQuestions.yaml instead of guessing.
+  - Record durable implementation decisions in refs/planning/decisions.yaml with rationale and consequences.
+  - Update refs/handoffs/currentHandoff.md when stopping with incomplete or context-heavy work.
+  - Keep machine-local paths only in files that explicitly allow machine-local configuration.
+  - Preserve refs file paths unless a framework migration note explains the change.

@@ -1,9 +1,10 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 modules:
-  - id: TODO-module
-    name: TODO
+  - id: TEMPLATE_TODO-module
+    name: TEMPLATE_TODO
     status: planned
-    owner_area: TODO
-    responsibility: TODO
+    owner_area: TEMPLATE_TODO
+    responsibility: TEMPLATE_TODO
     dependencies: []

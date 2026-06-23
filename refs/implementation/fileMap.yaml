@@ -1,7 +1,8 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 areas:
-  TODO-area:
+  TEMPLATE_TODO-area:
     guidance: []
     source_roots: []
-    notes: TODO
+    notes: TEMPLATE_TODO

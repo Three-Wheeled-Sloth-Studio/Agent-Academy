@@ -1,9 +1,10 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 decisions:
-  - id: TODO-decision
+  - id: TEMPLATE_TODO-decision
     status: proposed
-    date: YYYY-MM-DD
-    decision: TODO
-    rationale: TODO
+    date: TEMPLATE_TODO_DATE
+    decision: TEMPLATE_TODO
+    rationale: TEMPLATE_TODO
     consequences: []

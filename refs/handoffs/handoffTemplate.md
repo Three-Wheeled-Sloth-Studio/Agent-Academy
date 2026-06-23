@@ -2,20 +2,20 @@
 
 ## Summary
 
-TODO
+TEMPLATE_TODO
 
 ## Files Changed
 
-TODO
+TEMPLATE_TODO
 
 ## Validation
 
-TODO
+TEMPLATE_TODO
 
 ## Follow-Ups
 
-TODO
+TEMPLATE_TODO
 
 ## Notes For Next Agent
 
-TODO
+TEMPLATE_TODO

@@ -1,7 +1,8 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 todos:
-  - id: TODO-task
+  - id: TEMPLATE_TODO-task
     status: open
-    area: TODO
-    summary: TODO
+    area: TEMPLATE_TODO
+    summary: TEMPLATE_TODO

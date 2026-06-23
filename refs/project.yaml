@@ -1,16 +1,17 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 identity:
-  name: TODO
-  repository_url: TODO
-  summary: TODO
-  current_phase: TODO
+  name: TEMPLATE_TODO
+  repository_url: TEMPLATE_TODO
+  summary: TEMPLATE_TODO
+  current_phase: TEMPLATE_TODO
 thesis:
-  core_promise: TODO
+  core_promise: TEMPLATE_TODO
 audience:
   primary_users: []
 stack:
-  summary: TODO
+  summary: TEMPLATE_TODO
 repository_layout:
   source_roots: []
   docs_roots: []

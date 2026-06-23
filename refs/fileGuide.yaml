@@ -1,4 +1,5 @@
 version: 1
+schema: refs/schemas/schemaRegistry.yaml
 purpose: Agent-readable guide for initializing a project refs folder.
 rules:
   - Keep entries factual, current, and concise.
@@ -7,6 +8,10 @@ rules:
   - Do not store secrets in refs.
 files:
   agents.yaml: Agent operating instructions, required reading order, and project-specific constraints.
+  templatePolicy.yaml: Template placeholder policy, required files, bootstrap files, and validation rules.
+  schemas/schemaRegistry.yaml: Machine-readable schema hints used by the refs validator.
+  MAINTENANCE.md: Framework maintainer guidance for adding files, changing schemas, and documenting migrations.
+  examples/: Generic examples that are not source-of-truth for copied projects.
   project.yaml: Project identity, purpose, stack, repository layout, source-of-truth links, and open questions.
   planning/roadmap.yaml: Major work lanes, horizons, statuses, and sequencing.
   planning/todos.yaml: Durable task list with ids, statuses, areas, and summaries.

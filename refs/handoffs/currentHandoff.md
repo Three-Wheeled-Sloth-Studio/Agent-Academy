@@ -2,16 +2,16 @@
 
 ## Current State
 
-TODO
+TEMPLATE_TODO
 
 ## Validation
 
-TODO
+TEMPLATE_TODO
 
 ## Known Gaps
 
-TODO
+TEMPLATE_TODO
 
 ## Next Useful Actions
 
-TODO
+TEMPLATE_TODO

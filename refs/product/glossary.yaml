@@ -1,5 +1,6 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 terms:
-  - term: TODO
-    definition: TODO
+  - term: TEMPLATE_TODO
+    definition: TEMPLATE_TODO

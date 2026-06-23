@@ -1,6 +1,10 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 commands:
-  - id: TODO-validation-command
-    command: TODO
-    purpose: TODO
+  - id: validate-refs-template
+    command: python refs/tools/validate_refs.py --mode template
+    purpose: Validate the reusable blank harness before publishing framework changes.
+  - id: validate-refs-initialized
+    command: python refs/tools/validate_refs.py --mode initialized
+    purpose: Validate a copied project after required bootstrap placeholders have been replaced.

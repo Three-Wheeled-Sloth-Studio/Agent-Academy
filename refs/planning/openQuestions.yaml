@@ -1,6 +1,7 @@
 version: 1
-updated: YYYY-MM-DD
+schema: refs/schemas/schemaRegistry.yaml
+updated: TEMPLATE_TODO_DATE
 open_questions:
-  - id: TODO-question
+  - id: TEMPLATE_TODO-question
     status: open
-    question: TODO
+    question: TEMPLATE_TODO
