@@ -13,3 +13,8 @@ instructions:
   - Update refs/handoffs/currentHandoff.md when stopping with incomplete or context-heavy work.
   - Keep machine-local paths only in files that explicitly allow machine-local configuration.
   - Preserve refs file paths unless a framework migration note explains the change.
+  - Never create, rename, or retain two tracked paths that differ only by letter casing; Windows and default macOS filesystems may collapse them even when Linux CI accepts them.
+  - Treat the Git index, not a filesystem directory scan, as the authority for case-collision checks. Initialized projects must add an automated guard that reads tracked paths from git ls-files, case-folds each complete path, and fails when distinct tracked paths share the same folded form.
+  - Wire the case-collision guard into the normal validation path and, where available, pre-typecheck and pre-build hooks so the failure is caught before compilation or packaging.
+  - Match import and reference casing exactly to the tracked path. Name companion modules with semantic suffixes such as Geometry, Model, State, View, or Utils rather than distinguishing files only by capitalization.
+  - Perform case-only renames through a temporary intermediate filename, then verify the resulting Git diff and run the case-collision guard.
