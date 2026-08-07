@@ -4,6 +4,10 @@ This repository contains a reusable `refs/` harness for project memory. It is in
 
 The harness is designed for human collaborators and coding agents. It gives agents a predictable reading order and gives teams a durable place to store project knowledge that should not live only in chat.
 
+The harness also includes a technical writing standard for clear, direct project prose. It uses a
+positive writing system instead of relying on isolated banned words, and it preserves human review
+for factual meaning and technical judgment.
+
 ## Use
 
 1. Copy the `refs/` directory into the target project root.

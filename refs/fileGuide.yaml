@@ -34,6 +34,7 @@ files:
   product/workflows.yaml: Step-by-step workflows users or agents must support.
   product/glossary.yaml: Project terms and definitions.
   implementation/codingStandards.md: Coding style, safety, quality, and review standards.
+  implementation/writingStandards.md: Plain technical writing rules, strict operational prose, and human review boundaries.
   implementation/repoConventions.md: Repo layout, naming, and contribution conventions.
   implementation/fileMap.yaml: Important files, source roots, and where to look for common tasks.
   implementation/configSchema.yaml: Config files, schema notes, portable versus machine-local fields.
