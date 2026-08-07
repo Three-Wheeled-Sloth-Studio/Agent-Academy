@@ -5,6 +5,7 @@ instructions:
   - Read refs/planning/roadmap.yaml and refs/planning/todos.yaml before adding or changing implementation work.
   - Read refs/architecture before changing system boundaries or module ownership.
   - Read refs/implementation/fileMap.yaml before searching broadly.
+  - Read refs/implementation/writingStandards.md before writing or revising durable technical prose.
   - Read refs/testing/validationCommands.yaml before finalizing changes.
   - Keep durable decisions, todos, handoffs, and validation notes in refs.
   - Do not store secrets in refs.
