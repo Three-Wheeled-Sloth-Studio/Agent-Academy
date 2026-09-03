@@ -24,6 +24,18 @@ schemas:
       - version
       - schema
       - instructions
+  refs/okfProfile.yaml:
+    required_top_level_keys:
+      - version
+      - schema
+      - updated
+      - okf
+      - bundle
+      - agent_academy
+      - indexes
+      - provenance
+      - relationships
+      - studio_catalog
   refs/planning/roadmap.yaml:
     required_top_level_keys:
       - version

@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the reusable refs harness.
-
-Template mode allows sentinel placeholders. Initialized mode rejects sentinel
-placeholders in bootstrap files so copied projects can verify they were filled.
-"""
+"""Validate the reusable refs harness and its Agent Academy OKF profile."""
 
 from __future__ import annotations
 
@@ -18,10 +14,21 @@ try:
 except ImportError as exc:  # pragma: no cover
     raise SystemExit("PyYAML is required: python -m pip install pyyaml") from exc
 
+try:
+    from generate_okf_indexes import expected_indexes
+except ImportError as exc:  # pragma: no cover
+    raise SystemExit("refs/tools/generate_okf_indexes.py is required") from exc
+
 
 ROOT = Path(__file__).resolve().parents[2]
 REFS = ROOT / "refs"
 POLICY = REFS / "templatePolicy.yaml"
+OKF_PROFILE = REFS / "okfProfile.yaml"
+OKF_RESERVED = {"index.md", "log.md"}
+OKF_STATUSES = {"draft", "stable", "deprecated"}
+OKF_TIMESTAMP_RE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
+)
 
 
 def load_yaml(path: Path) -> Any:
@@ -38,11 +45,15 @@ def text(path: Path) -> str:
 
 
 def all_ref_files() -> list[Path]:
-    return [p for p in REFS.rglob("*") if p.is_file()]
+    return [p for p in REFS.rglob("*") if p.is_file() and "__pycache__" not in p.parts]
 
 
 def yaml_files() -> list[Path]:
     return [p for p in all_ref_files() if p.suffix in {".yaml", ".yml"}]
+
+
+def markdown_files() -> list[Path]:
+    return [p for p in all_ref_files() if p.suffix.lower() == ".md"]
 
 
 def add_error(errors: list[str], path: Path | str, message: str) -> None:
@@ -149,13 +160,183 @@ def validate_secret_scan(policy: dict[str, Any], errors: list[str]) -> None:
 
 def validate_portable_paths(errors: list[str]) -> None:
     absolute_windows = re.compile(r"[A-Za-z]:\\")
-    absolute_unix = re.compile(r"(?<!:)\\s/[A-Za-z0-9_.-]")
+    absolute_unix = re.compile(r"(?<!:)\s/[A-Za-z0-9_.-]")
     for path in yaml_files():
         contents = text(path)
         if absolute_windows.search(contents):
             add_error(errors, path, "contains a Windows absolute path")
         if absolute_unix.search(contents):
             add_error(errors, path, "contains a Unix absolute path")
+
+
+def parse_okf_frontmatter(path: Path, errors: list[str]) -> dict[str, Any] | None:
+    contents = text(path)
+    if not contents.startswith("---\n"):
+        add_error(errors, path, "OKF concept is missing YAML frontmatter")
+        return None
+    end = contents.find("\n---\n", 4)
+    if end < 0:
+        add_error(errors, path, "OKF frontmatter is not closed")
+        return None
+    raw = contents[4:end]
+    try:
+        data = yaml.load(raw, Loader=yaml.BaseLoader) or {}
+    except yaml.YAMLError as exc:
+        add_error(errors, path, f"invalid OKF frontmatter: {exc}")
+        return None
+    if not isinstance(data, dict):
+        add_error(errors, path, "OKF frontmatter must be a mapping")
+        return None
+    return data
+
+
+def validate_timestamp(value: Any, path: Path, field: str, errors: list[str]) -> None:
+    if not isinstance(value, str) or not OKF_TIMESTAMP_RE.match(value):
+        add_error(
+            errors,
+            path,
+            f"`{field}` must be an ISO 8601 datetime with an explicit UTC offset",
+        )
+
+
+def as_list(value: Any) -> list[Any]:
+    if isinstance(value, list):
+        return value
+    if isinstance(value, dict):
+        return [value]
+    return []
+
+
+def validate_okf_metadata(path: Path, data: dict[str, Any], errors: list[str]) -> None:
+    concept_type = data.get("type")
+    if not isinstance(concept_type, str) or not concept_type.strip():
+        add_error(errors, path, "OKF frontmatter must contain a non-empty `type`")
+
+    status = data.get("status")
+    if status is not None and status not in OKF_STATUSES:
+        add_error(errors, path, f"OKF status `{status}` is not supported")
+
+    generated = data.get("generated")
+    if generated is not None:
+        if not isinstance(generated, dict) or not generated.get("by"):
+            add_error(errors, path, "`generated` must be a mapping with non-empty `by`")
+        elif generated.get("at") is not None:
+            validate_timestamp(generated.get("at"), path, "generated.at", errors)
+
+    verified = data.get("verified")
+    if verified is not None:
+        records = as_list(verified)
+        if not records:
+            add_error(errors, path, "`verified` must be a mapping or list of mappings")
+        for index, record in enumerate(records):
+            if not isinstance(record, dict) or not record.get("by") or not record.get("at"):
+                add_error(errors, path, f"`verified[{index}]` must contain `by` and `at`")
+                continue
+            validate_timestamp(record.get("at"), path, f"verified[{index}].at", errors)
+
+    stale_after = data.get("stale_after")
+    if stale_after is not None:
+        validate_timestamp(stale_after, path, "stale_after", errors)
+
+    sources = data.get("sources")
+    if sources is not None:
+        if not isinstance(sources, list):
+            add_error(errors, path, "`sources` must be a list")
+        else:
+            for index, source in enumerate(sources):
+                if not isinstance(source, dict) or not source.get("resource"):
+                    add_error(errors, path, f"`sources[{index}]` must contain `resource`")
+                    continue
+                if source.get("last_modified") is not None:
+                    validate_timestamp(
+                        source.get("last_modified"),
+                        path,
+                        f"sources[{index}].last_modified",
+                        errors,
+                    )
+                usage_window = source.get("usage_window")
+                if isinstance(usage_window, dict):
+                    for key in ("from", "to"):
+                        if usage_window.get(key) is not None:
+                            validate_timestamp(
+                                usage_window.get(key),
+                                path,
+                                f"sources[{index}].usage_window.{key}",
+                                errors,
+                            )
+
+    usage_window = data.get("usage_window")
+    if isinstance(usage_window, dict):
+        for key in ("from", "to"):
+            if usage_window.get(key) is not None:
+                validate_timestamp(usage_window.get(key), path, f"usage_window.{key}", errors)
+
+
+def validate_okf_concepts(errors: list[str]) -> None:
+    for path in markdown_files():
+        if path.name in OKF_RESERVED:
+            continue
+        data = parse_okf_frontmatter(path, errors)
+        if data is not None:
+            validate_okf_metadata(path, data, errors)
+
+
+def validate_okf_profile(loaded: dict[str, Any], errors: list[str]) -> None:
+    profile = loaded.get(rel(OKF_PROFILE))
+    if not isinstance(profile, dict):
+        add_error(errors, OKF_PROFILE, "OKF profile must be a mapping")
+        return
+    okf = profile.get("okf")
+    bundle = profile.get("bundle")
+    if not isinstance(okf, dict) or not okf.get("version"):
+        add_error(errors, OKF_PROFILE, "missing `okf.version`")
+        return
+    if not isinstance(bundle, dict) or bundle.get("root") != "refs":
+        add_error(errors, OKF_PROFILE, "`bundle.root` must be `refs`")
+
+    baseline = okf.get("baseline_commit")
+    if not isinstance(baseline, str) or not re.fullmatch(r"[0-9a-f]{40}", baseline):
+        add_error(errors, OKF_PROFILE, "`okf.baseline_commit` must be a full commit SHA")
+
+    root_index = REFS / "index.md"
+    if not root_index.is_file():
+        add_error(errors, root_index, "OKF bundle root index is missing")
+        return
+    data = parse_okf_frontmatter(root_index, errors)
+    if data is None:
+        return
+    if set(data) != {"okf_version"}:
+        add_error(errors, root_index, "root index frontmatter may contain only `okf_version`")
+    if data.get("okf_version") != str(okf.get("version")):
+        add_error(errors, root_index, "`okf_version` does not match refs/okfProfile.yaml")
+
+    for path in REFS.rglob("index.md"):
+        if path == root_index:
+            continue
+        if text(path).startswith("---\n"):
+            add_error(errors, path, "non-root OKF index files must not contain frontmatter")
+
+
+def validate_okf_indexes(errors: list[str]) -> None:
+    try:
+        expected = expected_indexes()
+    except SystemExit as exc:
+        add_error(errors, "refs/index.md", f"could not generate OKF indexes: {exc}")
+        return
+
+    expected_paths = set(expected)
+    existing_paths = {
+        path for path in REFS.rglob("index.md") if "__pycache__" not in path.parts
+    }
+
+    for path, wanted in expected.items():
+        if not path.is_file():
+            add_error(errors, path, "generated OKF index is missing")
+        elif text(path) != wanted:
+            add_error(errors, path, "generated OKF index is stale")
+
+    for path in existing_paths - expected_paths:
+        add_error(errors, path, "unexpected generated OKF index")
 
 
 def main() -> int:
@@ -177,6 +358,9 @@ def main() -> int:
     validate_placeholders(policy, args.mode, errors)
     validate_secret_scan(policy, errors)
     validate_portable_paths(errors)
+    validate_okf_concepts(errors)
+    validate_okf_profile(loaded, errors)
+    validate_okf_indexes(errors)
 
     if errors:
         print("refs validation failed:", file=sys.stderr)
@@ -184,7 +368,7 @@ def main() -> int:
             print(f"- {error}", file=sys.stderr)
         return 1
 
-    print(f"refs validation passed ({args.mode} mode)")
+    print(f"refs validation passed ({args.mode} mode, OKF-compatible)")
     return 0
 
 

@@ -1,3 +1,10 @@
+---
+type: Coding Standards
+title: Coding Standards
+description: Project-specific coding standards plus mandatory cross-platform path-safety rules.
+status: draft
+tags: [implementation, coding-standards]
+---
 # Coding Standards
 
 TEMPLATE_TODO: Define project-specific coding style, safety rules, review expectations, and quality bar.

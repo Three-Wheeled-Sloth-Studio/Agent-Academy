@@ -1,3 +1,10 @@
+---
+type: Framework Maintenance
+title: Framework Maintenance
+description: Rules for changing the reusable Agent Academy refs harness and its OKF-compatible profile.
+status: stable
+tags: [agent-academy, maintenance, okf]
+---
 # Framework Maintenance
 
 Use this guide when changing the reusable refs harness itself. Do not add project-specific facts to the framework.
@@ -6,14 +13,27 @@ Use this guide when changing the reusable refs harness itself. Do not add projec
 
 1. Add the file under the most specific existing `refs/` folder.
 2. Include `version: 1` and `schema: refs/schemas/schemaRegistry.yaml` for YAML files.
-3. Use `TEMPLATE_TODO` and `TEMPLATE_TODO_DATE` for intentional blanks.
-4. Document the file in `refs/fileGuide.yaml`.
-5. Add schema hints in `refs/schemas/schemaRegistry.yaml` if the file is structured YAML.
-6. Add the file to `refs/templatePolicy.yaml` if it is required or has special placeholder rules.
+3. For a non-reserved Markdown knowledge document, add valid OKF frontmatter with at least a non-empty `type`.
+4. Use `TEMPLATE_TODO` and `TEMPLATE_TODO_DATE` for intentional blanks.
+5. Document the file in `refs/fileGuide.yaml`.
+6. Add schema hints in `refs/schemas/schemaRegistry.yaml` if the file is structured YAML.
+7. Add the file to `refs/templatePolicy.yaml` if it is required or has special placeholder rules.
+8. Regenerate `index.md` files with `python refs/tools/generate_okf_indexes.py`.
 
 ## Update Schemas
 
 Schema hints should stay simple and stable. Prefer required top-level keys and allowed status values over highly specific project rules.
+
+Agent Academy YAML schemas remain authoritative for deterministic project state. OKF compatibility is additive and must not weaken those schemas.
+
+## OKF Profile Maintenance
+
+- `refs/okfProfile.yaml` pins the canonical OKF repository, supported version, and reference commit.
+- Upgrade the pinned OKF version only as an explicit profile migration.
+- Preserve Agent Academy extensions when OKF does not yet express equivalent semantics.
+- Never infer `verified` from authorship, automated validation, test results, or Git history.
+- Keep generated `index.md` files committed and exactly synchronized with the generator.
+- Do not add `log.md` merely for conformance; Git history and existing Agent Academy logs remain authoritative until a concrete OKF consumer requires a log surface.
 
 ## Versioning
 
@@ -22,3 +42,5 @@ Keep existing paths stable whenever possible. When a breaking layout change is u
 ## Migrations
 
 Migration notes should include the old path, new path, reason for change, and the safest copy/update sequence. Avoid destructive instructions.
+
+For OKF alignment, preserve existing YAML state and project-specific taxonomies. Mature repositories may adopt the OKF profile without importing blank Agent Academy files they do not otherwise need.

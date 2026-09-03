@@ -1,3 +1,10 @@
+---
+type: Regression Checklist
+title: Regression Checklist
+description: Known regression checks including mandatory cross-platform repository path safety.
+status: draft
+tags: [testing, regression]
+---
 # Regression Checklist
 
 ## Cross-platform repository paths

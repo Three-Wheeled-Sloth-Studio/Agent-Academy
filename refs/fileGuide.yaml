@@ -5,12 +5,17 @@ rules:
   - Keep entries factual, current, and concise.
   - Prefer project-neutral schemas that are easy for code agents to parse.
   - Use YAML for structured state and Markdown for explanatory prose.
+  - Treat non-reserved Markdown files as OKF concepts with YAML frontmatter.
+  - Do not hand-edit generated index.md files.
   - Do not store secrets in refs.
 files:
+  index.md: Generated OKF discovery surface for the refs bundle. The root index declares okf_version; directory indexes contain no frontmatter.
   agents.yaml: Agent operating instructions, required reading order, and project-specific constraints.
+  okfProfile.yaml: Agent Academy OKF compatibility profile, pinned OKF source version, authority boundaries, index policy, and studio-catalog contract.
   templatePolicy.yaml: Template placeholder policy, required files, bootstrap files, and validation rules.
   schemas/schemaRegistry.yaml: Machine-readable schema hints used by the refs validator.
-  MAINTENANCE.md: Framework maintainer guidance for adding files, changing schemas, and documenting migrations.
+  MAINTENANCE.md: Framework maintainer guidance for adding files, changing schemas, upgrading the OKF profile, and documenting migrations.
+  README.md: Initialization instructions and overview of the Agent Academy plus OKF memory model.
   examples/: Generic examples that are not source-of-truth for copied projects.
   project.yaml: Project identity, purpose, stack, repository layout, source-of-truth links, and open questions.
   planning/roadmap.yaml: Major work lanes, horizons, statuses, and sequencing.
@@ -20,7 +25,7 @@ files:
   planning/risks.yaml: Known risks, severity, mitigation, and owner if known.
   planning/assumptions.yaml: Working assumptions that should be revisited when facts change.
   planning/openQuestions.yaml: Unresolved questions that affect implementation or product direction.
-  architecture/overview.md: Plain-language architecture summary.
+  architecture/overview.md: Plain-language architecture summary and OKF architecture concept.
   architecture/stack.yaml: Languages, frameworks, runtimes, build tools, and package managers.
   architecture/modules.yaml: Module map with responsibilities, status, dependencies, and source paths.
   architecture/dataFlow.md: How data enters, moves through, and exits the system.
@@ -33,12 +38,13 @@ files:
   product/featureCatalog.yaml: Feature list with status and short descriptions.
   product/workflows.yaml: Step-by-step workflows users or agents must support.
   product/glossary.yaml: Project terms and definitions.
-  implementation/codingStandards.md: Coding style, safety, quality, and review standards.
-  implementation/repoConventions.md: Repo layout, naming, and contribution conventions.
+  implementation/codingStandards.md: Coding style, safety, quality, review standards, and mandatory cross-platform path safety.
+  implementation/repoConventions.md: Repo layout, naming, contribution conventions, and path portability rules.
   implementation/fileMap.yaml: Important files, source roots, and where to look for common tasks.
   implementation/configSchema.yaml: Config files, schema notes, portable versus machine-local fields.
   implementation/envVars.example: Safe example environment variables with no real secrets.
   implementation/dependencyPolicy.md: Dependency approval, versioning, and external tool policy.
+  implementation/okfCompatibility.md: Authority boundaries and interoperability rules for the Agent Academy OKF profile.
   handoffs/handoffTemplate.md: Template for future handoff notes.
   handoffs/currentHandoff.md: Current state, validation, known gaps, and next useful actions.
   handoffs/implementationLog.yaml: Chronological implementation entries.
@@ -46,7 +52,7 @@ files:
   testing/testStrategy.md: Testing philosophy and layers.
   testing/acceptanceCriteria.yaml: Durable acceptance criteria for important workflows.
   testing/smokeTests.yaml: Fast manual or automated smoke tests.
-  testing/regressionChecklist.md: Checklist for preventing known regressions.
+  testing/regressionChecklist.md: Checklist for preventing known regressions, including cross-platform path collisions.
   testing/validationCommands.yaml: Commands agents should run and what they verify.
   UI/uiStyle.yaml: UI style rules and layout principles.
   UI/designTokens.yaml: Colors, spacing, typography, and shared UI constants.
@@ -69,3 +75,6 @@ files:
   operations/troubleshooting.md: Common failures and fixes.
   operations/releaseChecklist.md: Release/package checklist.
   operations/backupAndSync.md: Backup, sync, and portability policy.
+  operations/okfMigration.md: Non-destructive OKF adoption and version-upgrade guidance for existing projects.
+  tools/generate_okf_indexes.py: Deterministically generate or check committed OKF index.md discovery files.
+  tools/validate_refs.py: Validate Agent Academy schemas, template rules, portability, OKF concepts, profile conformance, and generated indexes.

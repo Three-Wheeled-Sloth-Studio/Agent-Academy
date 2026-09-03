@@ -1,3 +1,10 @@
+---
+type: Repository Conventions
+title: Repo Conventions
+description: Repository layout, naming, generated-file, contribution, and cross-platform path conventions.
+status: draft
+tags: [implementation, repository]
+---
 # Repo Conventions
 
 TEMPLATE_TODO: Describe project-specific repository layout, naming conventions, generated files, and contribution expectations.

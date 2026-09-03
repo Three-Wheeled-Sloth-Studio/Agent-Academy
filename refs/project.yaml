@@ -16,6 +16,8 @@ repository_layout:
   source_roots: []
   docs_roots: []
 source_of_truth:
+  discovery: refs/index.md
+  okf_profile: refs/okfProfile.yaml
   planning: refs/planning
   architecture: refs/architecture
   product: refs/product

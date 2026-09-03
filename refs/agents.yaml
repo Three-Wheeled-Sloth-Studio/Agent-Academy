@@ -6,7 +6,11 @@ instructions:
   - Read refs/architecture before changing system boundaries or module ownership.
   - Read refs/implementation/fileMap.yaml before searching broadly.
   - Read refs/testing/validationCommands.yaml before finalizing changes.
+  - Use refs/index.md as the OKF discovery surface, but do not substitute it for this required reading order.
   - Keep durable decisions, todos, handoffs, and validation notes in refs.
+  - Preserve OKF frontmatter on every non-reserved Markdown concept under refs.
+  - Do not hand-edit generated index.md files; regenerate them with refs/tools/generate_okf_indexes.py.
+  - Never infer OKF verified status from generation, passing tests, Git history, or refs validation.
   - Do not store secrets in refs.
   - If a project fact is unknown, record it in refs/planning/openQuestions.yaml instead of guessing.
   - Record durable implementation decisions in refs/planning/decisions.yaml with rationale and consequences.

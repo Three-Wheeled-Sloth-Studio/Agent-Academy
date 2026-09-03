@@ -1,3 +1,10 @@
+---
+type: Handoff
+title: Current Handoff
+description: Current implementation state, validation, known gaps, and next useful actions.
+status: draft
+tags: [handoff]
+---
 # Current Handoff
 
 ## Current State
