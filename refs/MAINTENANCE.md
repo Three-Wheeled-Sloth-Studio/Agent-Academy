@@ -20,6 +20,19 @@ Use this guide when changing the reusable refs harness itself. Do not add projec
 7. Add the file to `refs/templatePolicy.yaml` if it is required or has special placeholder rules.
 8. Regenerate `index.md` files with `python refs/tools/generate_okf_indexes.py`.
 
+## Agent Re-entry Context Maintenance
+
+`refs/tools/generate_agent_context.py` is a derived orientation layer over authoritative project memory. Keep the generator project-neutral and deterministic.
+
+- Do not move project truth into generated packets; source facts remain in the normal refs and source files.
+- Keep the routine default context budget bounded. If output grows, tighten handoffs, selectors, or source structure before increasing the budget.
+- Preserve progressive loading: packet first, targeted file-map/search reads next, broad roadmap/architecture/history reads only when needed.
+- Support Agent Academy's canonical `fileMap.yaml` `areas` structure; compatibility with richer project extensions may be additive but must not make them mandatory.
+- The blank template must remain a valid input. `TEMPLATE_TODO` values should be omitted from packets rather than emitted as apparent project facts.
+- Keep git inspection local and read-only. The generator must not require network access, GitHub CLI, or provider credentials.
+- When authoritative planning or handoff structures change, update the generator and its `--check` validation in the same framework change.
+- Generated packet files are disposable scratch artifacts and should not become committed project memory.
+
 ## Update Schemas
 
 Schema hints should stay simple and stable. Prefer required top-level keys and allowed status values over highly specific project rules.
