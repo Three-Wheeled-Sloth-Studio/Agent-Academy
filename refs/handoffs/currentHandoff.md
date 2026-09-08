@@ -1,7 +1,7 @@
 ---
 type: Handoff
 title: Current Handoff
-description: Delta-oriented current implementation state for compact coding-agent re-entry.
+description: Current implementation state, validation, known gaps, and next useful actions.
 status: draft
 tags: [handoff]
 ---
