@@ -3,6 +3,7 @@
 .vscode/
 *.swp
 *.tmp
+.agent-context.md
 
 # Python validation cache
 __pycache__/
