@@ -26,10 +26,31 @@ The `refs/` directory is also an Open Knowledge Format (OKF) v0.2 bundle. Agent 
 
    ```powershell
    python refs/tools/validate_refs.py --mode initialized
+   python refs/tools/generate_agent_context.py --check
    ```
 
 6. Keep durable project knowledge in `refs/` instead of only in chat.
 7. Do not store secrets, API keys, tokens, passwords, or machine-only credentials in `refs/`.
+
+## Routine Coding-Agent Re-entry
+
+For routine continuation or after a coding-agent context reset, do not begin by rereading the full roadmap, decision history, architecture set, and accumulated handoffs. Generate a bounded orientation packet first:
+
+```powershell
+python refs/tools/generate_agent_context.py --focus "short description of the current task"
+```
+
+The packet derives compact context from authoritative refs plus local git state. It may include the current branch and commit, changed paths, relevant handoff highlights, accepted decisions, active todos and roadmap items, file-map hints, and validation commands.
+
+The packet is deliberately **not** authoritative. Use it to decide what to read next. Load deeper roadmap, architecture, history, or source files only when the task crosses those boundaries or the packet is insufficient. Continue diff-first from the accepted checkpoint and treat accepted decisions as inputs unless new runtime, test, or user evidence contradicts them.
+
+The generator prints to stdout by default. A local scratch file is optional:
+
+```powershell
+python refs/tools/generate_agent_context.py --focus "..." --output .agent-context.md
+```
+
+Do not commit generated re-entry packets as project state. The default packet budget is 8,000 characters; if routine output exceeds that budget, tighten the authoritative handoff or selectors rather than simply increasing reset context.
 
 ## Required Bootstrap Files
 
@@ -41,7 +62,7 @@ Fill these first after copying the harness:
 - `refs/planning/todos.yaml`: durable task list.
 - `refs/architecture/overview.md`: how the system is shaped.
 - `refs/implementation/fileMap.yaml`: where important code lives.
-- `refs/handoffs/currentHandoff.md`: current state and next-agent context.
+- `refs/handoffs/currentHandoff.md`: concise accepted baseline, recent delta, current gap, next slice, constraints, and validation.
 - `refs/testing/validationCommands.yaml`: commands agents should run before finishing work.
 
 ## OKF Compatibility
