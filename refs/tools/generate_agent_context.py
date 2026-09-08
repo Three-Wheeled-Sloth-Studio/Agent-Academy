@@ -138,7 +138,7 @@ def _truncate(value: str, limit: int = 320) -> str:
 def _rank_records(
     records: list[tuple[str, str]],
     focus_tokens: set[str],
-    limit: int,
+    limit: int = DEFAULT_MAX_ITEMS,
 ) -> list[tuple[str, str]]:
     if not records:
         return []
@@ -166,11 +166,10 @@ def _accepted_decisions(path: Path, focus_tokens: set[str]) -> list[tuple[str, s
             continue
         if str(item.get("status") or "").casefold() != "accepted":
             continue
-        decision_id = _clean(item.get("id")) or "decision"
         decision = _clean(item.get("decision"))
         if decision:
-            records.append((decision_id, decision))
-    return _rank_records(records, focus_tokens, DEFAULT_MAX_ITEMS)
+            records.append((_clean(item.get("id")) or "decision", decision))
+    return _rank_records(records, focus_tokens)
 
 
 def _active_todos(path: Path, focus_tokens: set[str]) -> list[tuple[str, str]]:
@@ -182,13 +181,13 @@ def _active_todos(path: Path, focus_tokens: set[str]) -> list[tuple[str, str]]:
             continue
         if str(item.get("status") or "").casefold() not in active:
             continue
-        todo_id = _clean(item.get("id")) or "todo"
         summary = _clean(item.get("summary"))
+        if not summary:
+            continue
         area = _clean(item.get("area"))
         detail = " — ".join(part for part in [area, summary] if part)
-        if detail:
-            records.append((todo_id, detail))
-    return _rank_records(records, focus_tokens, DEFAULT_MAX_ITEMS)
+        records.append((_clean(item.get("id")) or "todo", detail))
+    return _rank_records(records, focus_tokens)
 
 
 def _active_roadmap(path: Path, focus_tokens: set[str]) -> list[tuple[str, str]]:
@@ -200,13 +199,13 @@ def _active_roadmap(path: Path, focus_tokens: set[str]) -> list[tuple[str, str]]
             continue
         if str(item.get("status") or "").casefold() not in active:
             continue
-        roadmap_id = _clean(item.get("id")) or "roadmap"
         summary = _clean(item.get("summary"))
+        if not summary:
+            continue
         horizon = _clean(item.get("horizon"))
         detail = " — ".join(part for part in [horizon, summary] if part)
-        if detail:
-            records.append((roadmap_id, detail))
-    return _rank_records(records, focus_tokens, DEFAULT_MAX_ITEMS)
+        records.append((_clean(item.get("id")) or "roadmap", detail))
+    return _rank_records(records, focus_tokens)
 
 
 def _markdown_blocks(path: Path) -> list[tuple[str, str]]:
@@ -498,6 +497,8 @@ def main() -> int:
             "Tighten the selectors or source material instead of increasing routine reset context."
         )
     if args.check:
+        if "TEMPLATE_TODO" in packet:
+            raise SystemExit("Generated packet leaked template placeholders.")
         print(f"agent context check ok: {len(packet)} characters")
         return 0
     if args.output is not None:
