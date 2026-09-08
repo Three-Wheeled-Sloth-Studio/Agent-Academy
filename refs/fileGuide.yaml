@@ -10,7 +10,7 @@ rules:
   - Do not store secrets in refs.
 files:
   index.md: Generated OKF discovery surface for the refs bundle. The root index declares okf_version; directory indexes contain no frontmatter.
-  agents.yaml: Agent operating instructions, required reading order, and project-specific constraints.
+  agents.yaml: Agent operating instructions, progressive context-loading rules, and project-specific constraints.
   okfProfile.yaml: Agent Academy OKF compatibility profile, pinned OKF source version, authority boundaries, index policy, and studio-catalog contract.
   templatePolicy.yaml: Template placeholder policy, required files, bootstrap files, and validation rules.
   schemas/schemaRegistry.yaml: Machine-readable schema hints used by the refs validator.
@@ -40,13 +40,13 @@ files:
   product/glossary.yaml: Project terms and definitions.
   implementation/codingStandards.md: Coding style, safety, quality, review standards, and mandatory cross-platform path safety.
   implementation/repoConventions.md: Repo layout, naming, contribution conventions, and path portability rules.
-  implementation/fileMap.yaml: Important files, source roots, and where to look for common tasks.
+  implementation/fileMap.yaml: Important files, source roots, and where to look for common tasks before broad searches.
   implementation/configSchema.yaml: Config files, schema notes, portable versus machine-local fields.
   implementation/envVars.example: Safe example environment variables with no real secrets.
   implementation/dependencyPolicy.md: Dependency approval, versioning, and external tool policy.
   implementation/okfCompatibility.md: Authority boundaries and interoperability rules for the Agent Academy OKF profile.
-  handoffs/handoffTemplate.md: Template for future handoff notes.
-  handoffs/currentHandoff.md: Current state, validation, known gaps, and next useful actions.
+  handoffs/handoffTemplate.md: Delta-oriented template for future handoff notes and compact re-entry context.
+  handoffs/currentHandoff.md: Accepted baseline, recent delta, current evidence or gap, next slice, constraints, and validation.
   handoffs/implementationLog.yaml: Chronological implementation entries.
   handoffs/changeLog.yaml: Human-readable changes to refs/project state.
   testing/testStrategy.md: Testing philosophy and layers.
@@ -76,5 +76,6 @@ files:
   operations/releaseChecklist.md: Release/package checklist.
   operations/backupAndSync.md: Backup, sync, and portability policy.
   operations/okfMigration.md: Non-destructive OKF adoption and version-upgrade guidance for existing projects.
+  tools/generate_agent_context.py: Generate or check a bounded, derived coding-agent re-entry packet from authoritative refs plus local git state.
   tools/generate_okf_indexes.py: Deterministically generate or check committed OKF index.md discovery files.
   tools/validate_refs.py: Validate Agent Academy schemas, template rules, portability, OKF concepts, profile conformance, and generated indexes.

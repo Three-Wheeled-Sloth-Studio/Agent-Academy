@@ -1,13 +1,20 @@
 version: 1
 schema: refs/schemas/schemaRegistry.yaml
 instructions:
-  - Read refs/project.yaml before starting project work.
-  - Read refs/planning/roadmap.yaml and refs/planning/todos.yaml before adding or changing implementation work.
+  - For routine continuation or after a context reset, start with `python refs/tools/generate_agent_context.py --focus "<short task phrase>"`; treat its output as derived orientation, never as a replacement source of truth.
+  - Load context progressively. Start from the generated packet and its file-map hints, then read deeper roadmap, architecture, history, or source material only when the task crosses those boundaries or the compact evidence is insufficient.
+  - On first project bootstrap, or when authoritative identity is required, read refs/project.yaml.
+  - Read only the relevant roadmap, todo, and accepted-decision records before changing implementation work; do not reread full planning history merely because a conversation reset occurred.
   - Read refs/architecture before changing system boundaries or module ownership.
   - Read refs/implementation/fileMap.yaml before searching broadly.
+  - Prefer diff-first continuation from the accepted checkpoint over reconstructing unchanged repository state.
+  - Treat accepted decisions as inputs unless new runtime, test, or user evidence contradicts them.
+  - Conserve coding-agent context and tokens deliberately: prefer targeted file ranges, symbol/search results, deterministic diagnostics, and tests over broad whole-file or whole-repository reads.
+  - If substantially the same diagnostic, search, comparison, or transformation is performed twice, make it a reusable script/helper/test before doing it a third time unless the operation is genuinely one-off.
   - Read refs/testing/validationCommands.yaml before finalizing changes.
-  - Use refs/index.md as the OKF discovery surface, but do not substitute it for this required reading order.
+  - Use refs/index.md as the OKF discovery surface, but do not substitute it for authoritative structured state.
   - Keep durable decisions, todos, handoffs, and validation notes in refs.
+  - Keep the active handoff delta-oriented: accepted baseline, what landed, current evidence or gap, next slice, relevant files, do-not-reopen constraints, and validation.
   - Preserve OKF frontmatter on every non-reserved Markdown concept under refs.
   - Do not hand-edit generated index.md files; regenerate them with refs/tools/generate_okf_indexes.py.
   - Never infer OKF verified status from generation, passing tests, Git history, or refs validation.

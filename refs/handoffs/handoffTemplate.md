@@ -7,19 +7,31 @@ tags: [handoff, template]
 ---
 # Handoff Template
 
-## Summary
+## Accepted Baseline
 
 TEMPLATE_TODO
 
-## Files Changed
+## What Landed
+
+TEMPLATE_TODO
+
+## Current Evidence Or Gap
+
+TEMPLATE_TODO
+
+## Next Slice
+
+TEMPLATE_TODO
+
+## Relevant Files
+
+TEMPLATE_TODO
+
+## Do Not Reopen
 
 TEMPLATE_TODO
 
 ## Validation
-
-TEMPLATE_TODO
-
-## Follow-Ups
 
 TEMPLATE_TODO
 
