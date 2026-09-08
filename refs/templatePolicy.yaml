@@ -22,6 +22,7 @@ required_files:
   - refs/operations/okfMigration.md
   - refs/testing/validationCommands.yaml
   - refs/schemas/schemaRegistry.yaml
+  - refs/tools/generate_agent_context.py
   - refs/tools/generate_okf_indexes.py
   - refs/tools/validate_refs.py
 bootstrap_files:
