@@ -1,7 +1,7 @@
 ---
 type: Handoff Template
 title: Handoff Template
-description: Reusable delta-oriented structure for transferring current implementation context to the next agent or collaborator.
+description: Reusable structure for transferring current implementation context to the next agent or collaborator.
 status: stable
 tags: [handoff, template]
 ---
