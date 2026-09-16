@@ -9,6 +9,21 @@ tags: [implementation, coding-standards]
 
 TEMPLATE_TODO: Define project-specific coding style, safety rules, review expectations, and quality bar.
 
+## Mandatory source modularity
+
+These rules apply to hand-authored implementation code in every initialized project:
+
+- Prefer one cohesive responsibility per source module. A file should be explainable in one short sentence without joining unrelated responsibilities with "and".
+- Keep functions and modules small enough that an agent or human can inspect the relevant behavior with a targeted symbol or line-range read rather than loading a large multi-purpose file.
+- Do not add a new independent responsibility to a file that already mixes unrelated concerns. Split the new responsibility, or decompose the existing file first when doing so can be done safely within the task.
+- Separate orchestration, domain logic, persistence, external adapters, presentation, state management, and pure transformations when they can evolve or be tested independently.
+- Avoid catch-all modules such as `utils`, `helpers`, `service`, or `manager` when the contents span multiple domains. Prefer semantic module names that expose purpose and ownership.
+- Prefer explicit imports and narrow public surfaces so the generated source catalog can represent dependencies and callable boundaries usefully.
+- Large-file thresholds may be enforced by project-specific linting, but line count alone is not the rule. Generated code, declarative data, migrations, protocol bindings, and other cohesive artifacts may legitimately be large.
+- When a file is difficult to summarize, difficult to test without unrelated setup, or repeatedly requires broad reads for small changes, treat that as evidence that the module should be decomposed.
+
+The goal is not aesthetic file splitting. The goal is bounded reasoning: a change should normally require loading only the source units that own the behavior being changed.
+
 ## Mandatory cross-platform path safety
 
 These rules apply to every initialized project, regardless of language or build system:

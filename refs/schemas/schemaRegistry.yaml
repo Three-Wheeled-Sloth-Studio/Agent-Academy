@@ -72,6 +72,11 @@ schemas:
       - schema
       - updated
       - integrations
+  refs/implementation/sourceCatalog/index.yaml:
+    required_top_level_keys:
+      - version
+      - schema
+      - source_catalog
   refs/testing/validationCommands.yaml:
     required_top_level_keys:
       - version

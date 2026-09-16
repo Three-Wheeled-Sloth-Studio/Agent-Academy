@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Generate a compact, derived re-entry packet for coding-agent sessions."""
-
 from __future__ import annotations
 
 import argparse
@@ -13,502 +12,217 @@ try:
     import yaml
 except ImportError as exc:  # pragma: no cover
     raise SystemExit("PyYAML is required: python -m pip install pyyaml") from exc
+try:
+    from generate_source_catalog import check_catalog, query_catalog, refresh_catalog
+except ImportError as exc:  # pragma: no cover
+    raise SystemExit("refs/tools/generate_source_catalog.py is required") from exc
 
-DEFAULT_MAX_CHARS = 8_000
-DEFAULT_MAX_ITEMS = 8
-DEFAULT_MAX_HANDOFF_SNIPPETS = 6
-DEFAULT_MAX_CHANGED_PATHS = 12
-
-_TOKEN_RE = re.compile(r"[a-z0-9]+")
-_HEADING_RE = re.compile(r"^##\s+(.+?)\s*$")
-_STOPWORDS = {
-    "add",
-    "agent",
-    "and",
-    "change",
-    "code",
-    "current",
-    "for",
-    "from",
-    "into",
-    "issue",
-    "make",
-    "project",
-    "the",
-    "this",
-    "tool",
-    "use",
-    "with",
-    "work",
-}
+MAX_CHARS = 8_000
+MAX_ITEMS = 8
+MAX_CHANGED = 12
+MAX_SOURCE_MATCHES = 6
+TOKEN_RE = re.compile(r"[a-z0-9]+")
+HEADING_RE = re.compile(r"^##\s+(.+?)\s*$")
+STOP = {"add", "agent", "and", "change", "code", "current", "for", "from", "into", "issue", "make", "project", "the", "this", "tool", "use", "with", "work"}
 
 
-def _repo_root() -> Path:
+def root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _run_git(repo_root: Path, *args: str) -> str | None:
+def git(repo: Path, *args: str) -> str | None:
     try:
-        result = subprocess.run(
-            ["git", *args],
-            cwd=repo_root,
-            capture_output=True,
-            check=False,
-            text=True,
-            timeout=5,
-        )
+        run = subprocess.run(["git", *args], cwd=repo, capture_output=True, check=False, text=True, timeout=5)
     except (OSError, subprocess.TimeoutExpired):
         return None
-    return result.stdout.strip() if result.returncode == 0 else None
+    return run.stdout.strip() if run.returncode == 0 else None
 
 
-def _ref_exists(repo_root: Path, ref: str) -> bool:
-    return _run_git(repo_root, "rev-parse", "--verify", "--quiet", ref) is not None
-
-
-def _resolve_base_ref(repo_root: Path, requested: str | None, branch: str) -> str | None:
-    candidates: list[str] = []
-    if requested:
-        candidates.append(requested)
-    candidates.extend(["dev", "main", "master", "origin/dev", "origin/main", "origin/master"])
-    for candidate in candidates:
-        if candidate == branch or _ref_exists(repo_root, candidate):
-            return candidate
-    return None
-
-
-def collect_git_context(repo_root: Path, *, base_ref: str | None = None) -> dict[str, Any]:
-    branch = _run_git(repo_root, "branch", "--show-current") or "detached"
-    head = _run_git(repo_root, "rev-parse", "--short=12", "HEAD") or "unknown"
-    resolved_base = _resolve_base_ref(repo_root, base_ref, branch)
-    status = _run_git(repo_root, "status", "--short") or ""
-    dirty_paths = [
-        line[3:].strip()
-        for line in status.splitlines()
-        if len(line) > 3 and line[3:].strip()
-    ]
-    changed_paths: list[str] = []
-    if resolved_base and branch != resolved_base:
-        changed = _run_git(repo_root, "diff", "--name-only", f"{resolved_base}...HEAD") or ""
-        changed_paths = [line.strip() for line in changed.splitlines() if line.strip()]
-    return {
-        "branch": branch,
-        "head": head,
-        "base_ref": resolved_base or "unresolved",
-        "changed_paths": changed_paths,
-        "dirty_paths": dirty_paths,
-    }
-
-
-def _read_yaml(path: Path) -> dict[str, Any]:
+def read_yaml(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    return payload if isinstance(payload, dict) else {}
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return data if isinstance(data, dict) else {}
 
 
-def _is_placeholder(value: Any) -> bool:
-    return "TEMPLATE_TODO" in str(value)
-
-
-def _clean(value: Any) -> str:
+def clean(value: Any) -> str:
     text = " ".join(str(value or "").split()).strip()
-    return "" if _is_placeholder(text) else text
+    return "" if "TEMPLATE_TODO" in text else text
 
 
-def _tokens(value: str) -> set[str]:
-    return {
-        token
-        for token in _TOKEN_RE.findall(value.casefold())
-        if len(token) > 2 and token not in _STOPWORDS and not token.startswith("template")
-    }
+def tokens(value: str) -> set[str]:
+    return {t for t in TOKEN_RE.findall(value.casefold()) if len(t) > 2 and t not in STOP and not t.startswith("template")}
 
 
-def _relevance(value: str, focus_tokens: set[str]) -> int:
-    return len(_tokens(value) & focus_tokens) if focus_tokens else 0
+def truncate(value: str, limit: int = 320) -> str:
+    value = " ".join(value.split())
+    return value if len(value) <= limit else value[: limit - 3].rstrip() + "..."
 
 
-def _truncate(value: str, limit: int = 320) -> str:
-    normalized = " ".join(value.split())
-    if len(normalized) <= limit:
-        return normalized
-    return normalized[: limit - 1].rstrip() + "…"
-
-
-def _rank_records(
-    records: list[tuple[str, str]],
-    focus_tokens: set[str],
-    limit: int = DEFAULT_MAX_ITEMS,
-) -> list[tuple[str, str]]:
+def ranked(records: list[tuple[str, str]], wanted: set[str], limit: int = MAX_ITEMS) -> list[tuple[str, str]]:
     if not records:
         return []
-    ranked = sorted(
-        records,
-        key=lambda item: (_relevance(f"{item[0]} {item[1]}", focus_tokens), item[0]),
-        reverse=True,
-    )
-    if focus_tokens:
-        matched = [
-            item
-            for item in ranked
-            if _relevance(f"{item[0]} {item[1]}", focus_tokens) > 0
-        ]
-        if matched:
-            return matched[:limit]
-    return ranked[:limit]
+    scored = sorted(records, key=lambda r: (len(tokens(f"{r[0]} {r[1]}") & wanted), r[0]), reverse=True)
+    if wanted:
+        matches = [r for r in scored if tokens(f"{r[0]} {r[1]}") & wanted]
+        if matches:
+            return matches[:limit]
+    return scored[:limit]
 
 
-def _accepted_decisions(path: Path, focus_tokens: set[str]) -> list[tuple[str, str]]:
-    payload = _read_yaml(path)
-    records: list[tuple[str, str]] = []
-    for item in payload.get("decisions") or []:
-        if not isinstance(item, dict):
-            continue
-        if str(item.get("status") or "").casefold() != "accepted":
-            continue
-        decision = _clean(item.get("decision"))
-        if decision:
-            records.append((_clean(item.get("id")) or "decision", decision))
-    return _rank_records(records, focus_tokens)
+def git_context(repo: Path, base_ref: str | None) -> dict[str, Any]:
+    branch = git(repo, "branch", "--show-current") or "detached"
+    candidates = [base_ref] if base_ref else []
+    candidates += ["dev", "main", "master", "origin/dev", "origin/main", "origin/master"]
+    base = next((c for c in candidates if c and (c == branch or git(repo, "rev-parse", "--verify", "--quiet", c) is not None)), None)
+    status = git(repo, "status", "--short") or ""
+    dirty = [row[3:].strip() for row in status.splitlines() if len(row) > 3 and row[3:].strip()]
+    changed: list[str] = []
+    if base and branch != base:
+        changed = [p for p in (git(repo, "diff", "--name-only", f"{base}...HEAD") or "").splitlines() if p]
+    return {"branch": branch, "head": git(repo, "rev-parse", "--short=12", "HEAD") or "unknown", "base": base or "unresolved", "changed": list(dict.fromkeys(changed + dirty))}
 
 
-def _active_todos(path: Path, focus_tokens: set[str]) -> list[tuple[str, str]]:
-    payload = _read_yaml(path)
+def planning(refs: Path, wanted: set[str]) -> tuple[list[tuple[str, str]], list[tuple[str, str]], list[tuple[str, str]]]:
+    decisions = []
+    for item in read_yaml(refs / "planning/decisions.yaml").get("decisions") or []:
+        if isinstance(item, dict) and str(item.get("status", "")).casefold() == "accepted" and clean(item.get("decision")):
+            decisions.append((clean(item.get("id")) or "decision", clean(item.get("decision"))))
     active = {"open", "in_progress", "in-progress", "active", "blocked"}
-    records: list[tuple[str, str]] = []
-    for item in payload.get("todos") or []:
-        if not isinstance(item, dict):
-            continue
-        if str(item.get("status") or "").casefold() not in active:
-            continue
-        summary = _clean(item.get("summary"))
-        if not summary:
-            continue
-        area = _clean(item.get("area"))
-        detail = " — ".join(part for part in [area, summary] if part)
-        records.append((_clean(item.get("id")) or "todo", detail))
-    return _rank_records(records, focus_tokens)
+    todos = []
+    for item in read_yaml(refs / "planning/todos.yaml").get("todos") or []:
+        if isinstance(item, dict) and str(item.get("status", "")).casefold() in active and clean(item.get("summary")):
+            todos.append((clean(item.get("id")) or "todo", " - ".join(v for v in [clean(item.get("area")), clean(item.get("summary"))] if v)))
+    road = []
+    for item in read_yaml(refs / "planning/roadmap.yaml").get("roadmap") or []:
+        if isinstance(item, dict) and str(item.get("status", "")).casefold() in {"planned", "in_progress", "in-progress", "active"} and clean(item.get("summary")):
+            road.append((clean(item.get("id")) or "roadmap", " - ".join(v for v in [clean(item.get("horizon")), clean(item.get("summary"))] if v)))
+    return ranked(decisions, wanted), ranked(todos, wanted), ranked(road, wanted)
 
 
-def _active_roadmap(path: Path, focus_tokens: set[str]) -> list[tuple[str, str]]:
-    payload = _read_yaml(path)
-    active = {"planned", "in_progress", "in-progress", "active"}
-    records: list[tuple[str, str]] = []
-    for item in payload.get("roadmap") or []:
-        if not isinstance(item, dict):
-            continue
-        if str(item.get("status") or "").casefold() not in active:
-            continue
-        summary = _clean(item.get("summary"))
-        if not summary:
-            continue
-        horizon = _clean(item.get("horizon"))
-        detail = " — ".join(part for part in [horizon, summary] if part)
-        records.append((_clean(item.get("id")) or "roadmap", detail))
-    return _rank_records(records, focus_tokens)
-
-
-def _markdown_blocks(path: Path) -> list[tuple[str, str]]:
+def markdown_sections(path: Path) -> dict[str, list[str]]:
+    sections: dict[str, list[str]] = {}
     if not path.is_file():
-        return []
-    section = "Overview"
-    blocks: list[tuple[str, str]] = []
+        return sections
+    current = "Overview"
+    frontmatter, code = False, False
     paragraph: list[str] = []
-    in_frontmatter = False
-    in_code = False
 
     def flush() -> None:
-        if not paragraph:
-            return
-        text = " ".join(item.strip() for item in paragraph if item.strip()).strip()
-        paragraph.clear()
-        if text and not _is_placeholder(text):
-            blocks.append((section, text))
+        nonlocal paragraph
+        text = clean(" ".join(paragraph))
+        if text:
+            sections.setdefault(current, []).append(text)
+        paragraph = []
 
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if line == "---" and not blocks and not paragraph:
-            in_frontmatter = not in_frontmatter
-            continue
-        if in_frontmatter:
-            continue
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if line == "---" and not sections and not paragraph:
+            frontmatter = not frontmatter; continue
+        if frontmatter: continue
         if line.startswith("```"):
-            flush()
-            in_code = not in_code
-            continue
-        if in_code:
-            continue
-        heading = _HEADING_RE.match(line)
+            flush(); code = not code; continue
+        if code: continue
+        heading = HEADING_RE.match(line)
         if heading:
-            flush()
-            section = heading.group(1)
-            continue
-        if line.startswith("# "):
-            flush()
-            continue
-        if not line:
-            flush()
-            continue
+            flush(); current = heading.group(1); continue
+        if line.startswith("# "): flush(); continue
+        if not line: flush(); continue
         if line.startswith(("- ", "* ")):
-            flush()
-            text = line[2:].strip()
-            if text and not _is_placeholder(text):
-                blocks.append((section, text))
+            flush(); value = clean(line[2:]);
+            if value: sections.setdefault(current, []).append(value)
             continue
         if re.match(r"^\d+\.\s+", line):
-            flush()
-            text = re.sub(r"^\d+\.\s+", "", line)
-            if text and not _is_placeholder(text):
-                blocks.append((section, text))
+            flush(); value = clean(re.sub(r"^\d+\.\s+", "", line));
+            if value: sections.setdefault(current, []).append(value)
             continue
         paragraph.append(line)
-    flush()
-    return blocks
+    flush(); return sections
 
 
-def _handoff_snippets(path: Path, focus_tokens: set[str]) -> list[tuple[str, str]]:
-    excluded = {"Read before implementation", "Validation", "Validation boundary"}
-    blocks = [item for item in _markdown_blocks(path) if item[0] not in excluded]
-    if not blocks:
-        return []
-    priority_words = {
-        "next": 5,
-        "gap": 5,
-        "current": 4,
-        "follow": 4,
-        "constraint": 3,
-        "accepted": 3,
-        "landed": 2,
-        "summary": 1,
-    }
-
-    def score(item: tuple[str, str]) -> int:
-        section, text = item
-        base = _relevance(f"{section} {text}", focus_tokens) * 10
-        folded = section.casefold()
-        return base + sum(weight for word, weight in priority_words.items() if word in folded)
-
-    ranked = sorted(
-        enumerate(blocks),
-        key=lambda pair: (score(pair[1]), -pair[0]),
-        reverse=True,
-    )
-    if focus_tokens:
-        matched = [
-            item
-            for _index, item in ranked
-            if _relevance(f"{item[0]} {item[1]}", focus_tokens) > 0
-        ]
-        if matched:
-            return matched[:DEFAULT_MAX_HANDOFF_SNIPPETS]
-    return [item for _index, item in ranked[:DEFAULT_MAX_HANDOFF_SNIPPETS]]
+def handoff(refs: Path, wanted: set[str]) -> tuple[list[str], list[tuple[str, str]]]:
+    sections = markdown_sections(refs / "handoffs/currentHandoff.md")
+    required = (sections.get("Required Reads For Next Slice") or sections.get("Read before implementation") or [])[:10]
+    ignore = {"Required Reads For Next Slice", "Read before implementation", "Validation", "Validation boundary"}
+    records = [(name, text) for name, values in sections.items() if name not in ignore for text in values]
+    priorities = {"next": 5, "gap": 5, "current": 4, "constraint": 3, "accepted": 3, "landed": 2}
+    records.sort(key=lambda r: (10 * len(tokens(f"{r[0]} {r[1]}") & wanted) + sum(v for k, v in priorities.items() if k in r[0].casefold())), reverse=True)
+    if wanted:
+        matches = [r for r in records if tokens(f"{r[0]} {r[1]}") & wanted]
+        if matches: records = matches
+    return required, records[:6]
 
 
-def _file_hints(path: Path, focus_tokens: set[str]) -> list[tuple[str, list[str]]]:
-    payload = _read_yaml(path)
-    hints: list[tuple[int, str, list[str]]] = []
-
-    for item in payload.get("common_tasks") or []:
-        if not isinstance(item, dict):
-            continue
-        label = _clean(item.get("task"))
-        paths = [_clean(value) for value in item.get("look_in") or []]
-        paths = [value for value in paths if value]
-        if label and paths:
-            score = _relevance(f"{label} {' '.join(paths)}", focus_tokens)
-            hints.append((score, label, paths))
-
-    areas = payload.get("areas") or {}
-    if isinstance(areas, dict):
-        for area_name, item in areas.items():
-            if not isinstance(item, dict):
-                continue
-            label = _clean(area_name)
-            paths: list[str] = []
-            for key in ("guidance", "source_roots"):
-                values = item.get(key) or []
-                if isinstance(values, list):
-                    paths.extend(_clean(value) for value in values)
-            paths = [value for value in paths if value]
-            notes = _clean(item.get("notes"))
-            searchable = f"{label} {notes} {' '.join(paths)}"
-            if label and (paths or notes):
-                hints.append((_relevance(searchable, focus_tokens), label, paths))
-
-    hints.sort(key=lambda item: (item[0], item[1]), reverse=True)
-    if focus_tokens and any(score > 0 for score, _label, _paths in hints):
-        hints = [item for item in hints if item[0] > 0]
-    return [(label, paths) for _score, label, paths in hints[:3]]
+def file_hints(refs: Path, wanted: set[str]) -> list[tuple[str, list[str]]]:
+    data = read_yaml(refs / "implementation/fileMap.yaml"); hints = []
+    for item in data.get("common_tasks") or []:
+        if isinstance(item, dict):
+            label, paths = clean(item.get("task")), [clean(v) for v in item.get("look_in") or [] if clean(v)]
+            if label and paths: hints.append((len(tokens(f"{label} {' '.join(paths)}") & wanted), label, paths))
+    for name, item in (data.get("areas") or {}).items() if isinstance(data.get("areas") or {}, dict) else []:
+        if not isinstance(item, dict): continue
+        paths = [clean(v) for key in ("guidance", "source_roots") for v in item.get(key) or [] if clean(v)]
+        label, note = clean(name), clean(item.get("notes"))
+        if label and (paths or note): hints.append((len(tokens(f"{label} {note} {' '.join(paths)}") & wanted), label, paths))
+    hints.sort(reverse=True)
+    if wanted and any(score for score, _, _ in hints): hints = [h for h in hints if h[0]]
+    return [(label, paths) for _, label, paths in hints[:3]]
 
 
-def _validation_commands(path: Path) -> list[tuple[str, str]]:
-    payload = _read_yaml(path)
-    records: list[tuple[str, str]] = []
-    for item in payload.get("commands") or []:
-        if not isinstance(item, dict):
-            continue
-        command_id = _clean(item.get("id")) or "validation"
-        command = _clean(item.get("command"))
-        if command:
-            records.append((command_id, command))
-    return records[:DEFAULT_MAX_ITEMS]
-
-
-def _project_identity(path: Path) -> tuple[str, str]:
-    payload = _read_yaml(path)
-    identity = payload.get("identity") or {}
-    name = _clean(identity.get("name")) or "Project"
-    phase = _clean(identity.get("current_phase")) or "unspecified"
-    return name, phase
-
-
-def _infer_issue(branch: str) -> int | None:
-    match = re.match(r"(?:agent|codex|issue)[/-](\d+)(?:-|$)", branch)
-    return int(match.group(1)) if match else None
-
-
-def build_packet(
-    repo_root: Path,
-    *,
-    focus: str = "",
-    issue: int | None = None,
-    base_ref: str | None = None,
-    git_context: dict[str, Any] | None = None,
-) -> str:
-    refs = repo_root / "refs"
-    git = git_context or collect_git_context(repo_root, base_ref=base_ref)
-    focus_tokens = _tokens(focus)
-    issue_number = issue or _infer_issue(str(git.get("branch") or ""))
-    project_name, phase = _project_identity(refs / "project.yaml")
-    decisions = _accepted_decisions(refs / "planning/decisions.yaml", focus_tokens)
-    todos = _active_todos(refs / "planning/todos.yaml", focus_tokens)
-    roadmap = _active_roadmap(refs / "planning/roadmap.yaml", focus_tokens)
-    handoff = _handoff_snippets(refs / "handoffs/currentHandoff.md", focus_tokens)
-    file_hints = _file_hints(refs / "implementation/fileMap.yaml", focus_tokens)
-    validation = _validation_commands(refs / "testing/validationCommands.yaml")
-
-    lines = [
-        f"# {project_name} — Generated Agent Re-entry Context",
-        "",
-        "> Derived orientation only. Authoritative refs and source remain the source of truth.",
-        "",
-        "## Session",
-        f"- Branch: `{git.get('branch', 'unknown')}`",
-        f"- HEAD: `{git.get('head', 'unknown')}`",
-        f"- Base ref: `{git.get('base_ref', 'unresolved')}`",
-        f"- Current phase: {phase}",
-    ]
-    if issue_number is not None:
-        lines.append(f"- Issue: #{issue_number}")
-    if focus.strip():
-        lines.append(f"- Focus: {focus.strip()}")
-
-    changed = list(
-        dict.fromkeys(
-            [
-                *(git.get("changed_paths") or []),
-                *(git.get("dirty_paths") or []),
-            ]
-        )
-    )
-    if changed:
-        lines.extend(["", "## Changed paths"])
-        for value in changed[:DEFAULT_MAX_CHANGED_PATHS]:
-            lines.append(f"- `{value}`")
-        if len(changed) > DEFAULT_MAX_CHANGED_PATHS:
-            lines.append(f"- … {len(changed) - DEFAULT_MAX_CHANGED_PATHS} more")
-
-    if handoff:
-        lines.extend(["", "## Current handoff highlights"])
-        for section, text in handoff:
-            lines.append(f"- **{section}:** {_truncate(text)}")
-
-    if decisions:
-        lines.extend(["", "## Relevant accepted decisions"])
-        for decision_id, decision in decisions:
-            lines.append(f"- **{decision_id}:** {_truncate(decision)}")
-
-    if todos:
-        lines.extend(["", "## Active todos"])
-        for todo_id, detail in todos:
-            lines.append(f"- **{todo_id}:** {_truncate(detail)}")
-
-    if roadmap:
-        lines.extend(["", "## Active roadmap"])
-        for roadmap_id, detail in roadmap:
-            lines.append(f"- **{roadmap_id}:** {_truncate(detail)}")
-
-    if file_hints:
-        lines.extend(["", "## File-map hints"])
-        for label, paths in file_hints:
-            if paths:
-                lines.append(f"- **{label}:** " + ", ".join(f"`{value}`" for value in paths))
-            else:
-                lines.append(f"- **{label}**")
-
-    if validation:
-        lines.extend(["", "## Validation commands"])
-        for command_id, command in validation:
-            lines.append(f"- `{command_id}` — `{command}`")
-
-    lines.extend(
-        [
-            "",
-            "## Context discipline",
-            "- Start here, then load deeper roadmap, architecture, history, or source only when the task requires it.",
-            "- Treat accepted decisions as inputs; reopen them only when new runtime/test evidence contradicts them.",
-            "- Continue diff-first from the accepted checkpoint instead of reconstructing unchanged repository state.",
-            "- Use the file map, targeted searches/ranges, deterministic diagnostics, and tests before broad reads.",
-            "- If substantially the same diagnostic/search/transformation is performed twice, make it reusable before doing it a third time.",
-        ]
-    )
+def build_packet(repo: Path, focus: str = "", issue: int | None = None, base_ref: str | None = None) -> str:
+    refs, wanted, session = repo / "refs", tokens(focus), git_context(repo, base_ref)
+    identity = read_yaml(refs / "project.yaml").get("identity") or {}
+    name, phase = clean(identity.get("name")) or "Project", clean(identity.get("current_phase")) or "unspecified"
+    decisions, todos, road = planning(refs, wanted)
+    required, highlights = handoff(refs, wanted)
+    hints = file_hints(refs, wanted)
+    matches = query_catalog(repo, focus, MAX_SOURCE_MATCHES) if focus.strip() else []
+    validation = [(clean(i.get("id")) or "validation", clean(i.get("command"))) for i in read_yaml(refs / "testing/validationCommands.yaml").get("commands") or [] if isinstance(i, dict) and clean(i.get("command"))][:MAX_ITEMS]
+    inferred = re.match(r"(?:agent|codex|issue)[/-](\d+)(?:-|$)", session["branch"])
+    issue = issue or (int(inferred.group(1)) if inferred else None)
+    lines = [f"# {name} - Generated Agent Re-entry Context", "", "> Derived orientation only. Authoritative refs and source remain the source of truth.", "", "## Session", f"- Branch: `{session['branch']}`", f"- HEAD: `{session['head']}`", f"- Base ref: `{session['base']}`", f"- Current phase: {phase}"]
+    if issue is not None: lines.append(f"- Issue: #{issue}")
+    if focus.strip(): lines.append(f"- Focus: {focus.strip()}")
+    if session["changed"]:
+        lines += ["", "## Changed paths"] + [f"- `{p}`" for p in session["changed"][:MAX_CHANGED]]
+    if required: lines += ["", "## Required reads for next slice"] + [f"- {truncate(v)}" for v in required]
+    if highlights: lines += ["", "## Current handoff highlights"] + [f"- **{k}:** {truncate(v)}" for k, v in highlights]
+    for title, records in [("Relevant accepted decisions", decisions), ("Active todos", todos), ("Active roadmap", road)]:
+        if records: lines += ["", f"## {title}"] + [f"- **{k}:** {truncate(v)}" for k, v in records]
+    if matches:
+        lines += ["", "## Source-catalog matches"]
+        for item in matches:
+            s, path = item.get("symbol"), item.get("path") or "unknown"
+            if not s: lines.append(f"- `{path}` (file match)"); continue
+            deps = s.get("dependencies") or []; suffix = f"; calls {', '.join(deps[:5])}" if deps else ""
+            targets = s.get("dependency_targets") or []
+            if targets:
+                suffix += "; targets " + ", ".join(f"{t.get('path')}:{t.get('symbol')}" for t in targets[:3])
+            lines.append(f"- `{path}:{s.get('line_start', '?')}-{s.get('line_end', '?')}` - `{truncate(str(s.get('signature') or s.get('name') or 'symbol'), 220)}`{suffix}")
+    if hints:
+        lines += ["", "## File-map hints"]
+        for label, paths in hints: lines.append(f"- **{label}:** " + ", ".join(f"`{p}`" for p in paths) if paths else f"- **{label}**")
+    if validation: lines += ["", "## Validation commands"] + [f"- `{k}` - `{v}`" for k, v in validation]
+    lines += ["", "## Context discipline", "- Start with required reads and source-catalog matches. Expand context only for a concrete dependency, ambiguity, failing test, system boundary, or authoritative reference.", "- Query `python refs/tools/generate_source_catalog.py --query \"<task or symbol>\"` before broad repository search when the packet is insufficient.", "- Prefer symbol-level or targeted line-range reads. Do not open a whole source file when the relevant symbol or range is enough.", "- Continue diff-first from the accepted checkpoint instead of reconstructing unchanged repository state.", "- Treat accepted decisions as inputs; reopen them only when new runtime/test evidence contradicts them.", "- When the environment supports sub-agents, delegate bounded independent work when that reduces parent context or enables useful parallel work; use the least expensive capable model and keep the parent responsible for integration and validation."]
     return "\n".join(lines).rstrip() + "\n"
 
 
-def parser() -> argparse.ArgumentParser:
-    result = argparse.ArgumentParser(description=__doc__)
-    result.add_argument("--focus", default="", help="Short task phrase used to select relevant context.")
-    result.add_argument("--issue", type=int, help="Optional issue number to display in the packet.")
-    result.add_argument("--base-ref", help="Optional integration/base ref used for changed-path context.")
-    result.add_argument("--output", type=Path, help="Optional local scratch file; stdout is the default.")
-    result.add_argument("--max-chars", type=int, default=DEFAULT_MAX_CHARS)
-    result.add_argument(
-        "--check",
-        action="store_true",
-        help="Validate packet generation and the configured size budget without printing the packet.",
-    )
-    return result
-
-
 def main() -> int:
-    args = parser().parse_args()
-    if args.max_chars < 2_000:
-        raise SystemExit("--max-chars must be at least 2000")
-    repo_root = _repo_root()
-    packet = build_packet(
-        repo_root,
-        focus=args.focus,
-        issue=args.issue,
-        base_ref=args.base_ref,
-    )
-    if len(packet) > args.max_chars:
-        raise SystemExit(
-            f"Generated packet is {len(packet)} characters; budget is {args.max_chars}. "
-            "Tighten the selectors or source material instead of increasing routine reset context."
-        )
+    parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--focus", default=""); parser.add_argument("--issue", type=int); parser.add_argument("--base-ref"); parser.add_argument("--output", type=Path); parser.add_argument("--max-chars", type=int, default=MAX_CHARS); parser.add_argument("--check", action="store_true"); args = parser.parse_args()
+    if args.max_chars < 2_000: raise SystemExit("--max-chars must be at least 2000")
+    repo = root()
     if args.check:
-        if "TEMPLATE_TODO" in packet:
-            raise SystemExit("Generated packet leaked template placeholders.")
-        print(f"agent context check ok: {len(packet)} characters")
-        return 0
-    if args.output is not None:
-        output = args.output if args.output.is_absolute() else repo_root / args.output
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(packet, encoding="utf-8")
-        print(f"Wrote generated agent context: {output}")
-        return 0
-    print(packet, end="")
-    return 0
+        ok, problems = check_catalog(repo)
+        if not ok: raise SystemExit("Source catalog is stale:\n- " + "\n- ".join(problems))
+    else: refresh_catalog(repo)
+    packet = build_packet(repo, args.focus, args.issue, args.base_ref)
+    if len(packet) > args.max_chars: raise SystemExit(f"Generated packet is {len(packet)} characters; budget is {args.max_chars}. Tighten selectors or source material instead of increasing routine reset context.")
+    if args.check:
+        if "TEMPLATE_TODO" in packet: raise SystemExit("Generated packet leaked template placeholders.")
+        print(f"agent context check ok: {len(packet)} characters"); return 0
+    if args.output:
+        path = args.output if args.output.is_absolute() else repo / args.output; path.parent.mkdir(parents=True, exist_ok=True); path.write_text(packet, encoding="utf-8"); print(f"Wrote generated agent context: {path}"); return 0
+    print(packet, end=""); return 0
 
 
 if __name__ == "__main__":

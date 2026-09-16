@@ -23,6 +23,10 @@ TEMPLATE_TODO
 
 TEMPLATE_TODO
 
+## Required Reads For Next Slice
+
+TEMPLATE_TODO: List only the files, symbols, or line ranges needed for the next slice. State why each read is required. Do not use this as a general repository reading list.
+
 ## Relevant Files
 
 TEMPLATE_TODO
