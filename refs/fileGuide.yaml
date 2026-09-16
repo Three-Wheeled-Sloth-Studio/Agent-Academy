@@ -7,10 +7,11 @@ rules:
   - Use YAML for structured state and Markdown for explanatory prose.
   - Treat non-reserved Markdown files as OKF concepts with YAML frontmatter.
   - Do not hand-edit generated index.md files.
+  - Do not hand-edit generated source-catalog files.
   - Do not store secrets in refs.
 files:
   index.md: Generated OKF discovery surface for the refs bundle. The root index declares okf_version; directory indexes contain no frontmatter.
-  agents.yaml: Agent operating instructions, progressive context-loading rules, and project-specific constraints.
+  agents.yaml: Agent operating instructions, progressive context-loading rules, source-discovery rules, delegation policy, and project-specific constraints.
   okfProfile.yaml: Agent Academy OKF compatibility profile, pinned OKF source version, authority boundaries, index policy, and studio-catalog contract.
   templatePolicy.yaml: Template placeholder policy, required files, bootstrap files, and validation rules.
   schemas/schemaRegistry.yaml: Machine-readable schema hints used by the refs validator.
@@ -38,15 +39,17 @@ files:
   product/featureCatalog.yaml: Feature list with status and short descriptions.
   product/workflows.yaml: Step-by-step workflows users or agents must support.
   product/glossary.yaml: Project terms and definitions.
-  implementation/codingStandards.md: Coding style, safety, quality, review standards, and mandatory cross-platform path safety.
-  implementation/repoConventions.md: Repo layout, naming, contribution conventions, and path portability rules.
+  implementation/codingStandards.md: Coding style, bounded source modularity, safety, quality, review standards, and mandatory cross-platform path safety.
+  implementation/repoConventions.md: Repo layout, naming, generated-file, contribution, and path portability rules.
   implementation/fileMap.yaml: Important files, source roots, and where to look for common tasks before broad searches.
+  implementation/sourceCatalog/index.yaml: Generated compact discovery manifest for the sharded source catalog; contains counts, parser coverage, shard paths, and the query command.
+  implementation/.sourceCatalogShards/shard-*.yaml: Generated source records grouped into stable hash buckets and intentionally hidden from the OKF discovery surface. Records include file imports/dependencies plus callable symbols, line ranges, signatures, inputs, outputs, and resolved static call targets when available.
   implementation/configSchema.yaml: Config files, schema notes, portable versus machine-local fields.
   implementation/envVars.example: Safe example environment variables with no real secrets.
   implementation/dependencyPolicy.md: Dependency approval, versioning, and external tool policy.
   implementation/okfCompatibility.md: Authority boundaries and interoperability rules for the Agent Academy OKF profile.
-  handoffs/handoffTemplate.md: Delta-oriented template for future handoff notes and compact re-entry context.
-  handoffs/currentHandoff.md: Accepted baseline, recent delta, current evidence or gap, next slice, constraints, and validation.
+  handoffs/handoffTemplate.md: Delta-oriented template for future handoff notes, explicit next-slice required reads, and compact re-entry context.
+  handoffs/currentHandoff.md: Accepted baseline, recent delta, current evidence or gap, next slice, explicit required reads, constraints, and validation.
   handoffs/implementationLog.yaml: Chronological implementation entries.
   handoffs/changeLog.yaml: Human-readable changes to refs/project state.
   testing/testStrategy.md: Testing philosophy and layers.
@@ -76,6 +79,7 @@ files:
   operations/releaseChecklist.md: Release/package checklist.
   operations/backupAndSync.md: Backup, sync, and portability policy.
   operations/okfMigration.md: Non-destructive OKF adoption and version-upgrade guidance for existing projects.
-  tools/generate_agent_context.py: Generate or check a bounded, derived coding-agent re-entry packet from authoritative refs plus local git state.
+  tools/generate_agent_context.py: Refresh source discovery and generate or check a bounded, derived coding-agent re-entry packet from authoritative refs plus local git state.
+  tools/generate_source_catalog.py: Deterministically generate, check, and query the sharded source catalog without requiring an LLM to read source files.
   tools/generate_okf_indexes.py: Deterministically generate or check committed OKF index.md discovery files.
   tools/validate_refs.py: Validate Agent Academy schemas, template rules, portability, OKF concepts, profile conformance, and generated indexes.

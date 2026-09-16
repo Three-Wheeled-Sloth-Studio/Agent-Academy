@@ -2,6 +2,10 @@
 
 Generated OKF discovery index. Do not edit manually.
 
+## Directories
+
+* [Source Catalog](sourceCatalog/) - Browse Source Catalog knowledge and resources.
+
 ## Concepts
 
 * [Coding Standards](codingStandards.md) - Project-specific coding standards plus mandatory cross-platform path-safety rules.
